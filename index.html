@@ -9,22 +9,15 @@
 <title>🎌 Anime Tracker</title>
 <style>
   :root {
-    --orange: #FF6B35;
-    --green: #2ECC71;
-    --yellow: #F39C12;
-    --purple: #9B59B6;
-    --bg: #0d0d14;
-    --card: #13131f;
-    --border: #1e1e2e;
-    --input-bg: #1a1a2e;
-    --text: #e0e0f0;
-    --muted: #666;
+    --orange: #FF6B35; --green: #2ECC71; --yellow: #F39C12;
+    --purple: #9B59B6; --bg: #0d0d14; --card: #13131f;
+    --border: #1e1e2e; --input-bg: #1a1a2e; --text: #e0e0f0; --muted: #666;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Helvetica Neue', sans-serif; min-height: 100vh; padding: 20px 16px 40px; }
-  @keyframes fadeIn { from { opacity:0; transform:translateY(-8px);} to { opacity:1; transform:translateY(0);} }
-  @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.05)} 100%{transform:scale(1)} }
-  @keyframes confetti { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-50px) scale(0.3)} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)} }
+  @keyframes pop { 0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)} }
+  @keyframes confetti { 0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-50px) scale(0.3)} }
 
   .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
   .header h1 { font-size:24px; font-weight:800; letter-spacing:-0.5px; }
@@ -43,21 +36,40 @@
   .filter-btn.active { background:var(--orange); color:#fff; border-color:var(--orange); }
 
   .cards { display:flex; flex-direction:column; gap:10px; }
-  .card { background:var(--card); border-radius:14px; padding:14px 16px; border:1px solid var(--border); animation:fadeIn 0.3s ease; transition:border-color 0.3s; position:relative; overflow:hidden; }
+
+  .card { background:var(--card); border-radius:14px; border:1px solid var(--border); animation:fadeIn 0.3s ease; transition:border-color 0.3s; position:relative; overflow:hidden; }
   .card.done { border-color:var(--green); }
-  .card.popping { animation:pop 0.4s ease; }
-  .card-top { display:flex; gap:12px; align-items:flex-start; }
+  .card-header { display:flex; gap:12px; align-items:flex-start; padding:14px 16px; cursor:pointer; }
   .card-left { flex:1; min-width:0; }
   .card-title-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
   .card-title { font-weight:800; font-size:15px; color:#f0f0ff; }
   .badge { border-radius:20px; padding:2px 9px; font-size:11px; font-weight:700; }
   .tag { background:#1e1e2e; border-radius:20px; padding:2px 9px; font-size:11px; color:#888; }
-  .stars { display:flex; gap:2px; margin-bottom:6px; }
-  .star { font-size:15px; color:#3a3a4a; cursor:pointer; }
+  .stars-row { display:flex; gap:2px; margin-bottom:4px; }
+  .star { font-size:15px; color:#3a3a4a; }
   .star.on { color:var(--orange); }
-  .notes-text { font-size:12px; color:var(--muted); font-style:italic; margin-top:4px; }
 
-  .progress-section { margin-top:10px; }
+  .season-pill { display:inline-flex; align-items:center; gap:5px; background:#FF6B3522; border:1px solid #FF6B3544; border-radius:20px; padding:3px 10px; font-size:12px; color:var(--orange); font-weight:700; margin-top:4px; }
+
+  .card-actions { display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
+  .act-btn { border-radius:8px; padding:6px 10px; cursor:pointer; font-size:13px; font-weight:700; border:1px solid; transition:opacity 0.2s; }
+  .act-btn:active { opacity:0.7; }
+  .btn-ep { background:#FF6B3522; color:var(--orange); border-color:#FF6B3544; }
+  .btn-next-season { background:#9B59B622; color:var(--purple); border-color:#9B59B644; font-size:11px; }
+  .btn-done { background:#2ECC7122; color:var(--green); border-color:#2ECC7144; }
+  .btn-edit { background:transparent; color:#666; border-color:#2e2e42; }
+  .btn-del { background:transparent; color:#e74c3c88; border-color:#e74c3c33; }
+  .chevron { font-size:12px; color:#444; margin-top:6px; transition:transform 0.2s; }
+  .chevron.open { transform:rotate(180deg); }
+
+  /* Expanded detail */
+  .card-detail { border-top:1px solid var(--border); padding:14px 16px; display:none; }
+  .card-detail.open { display:block; }
+
+  .detail-section { margin-bottom:14px; }
+  .detail-title { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; font-weight:700; }
+
+  /* Progress */
   .ep-row { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
   .ep-current { font-size:13px; color:var(--orange); font-weight:700; }
   .ep-total { font-size:13px; color:var(--muted); }
@@ -65,21 +77,30 @@
   .progress-bar { background:#1e1e2e; border-radius:99px; height:5px; overflow:hidden; }
   .progress-fill { height:100%; border-radius:99px; transition:width 0.4s ease; }
 
-  .card-actions { display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
-  .act-btn { border-radius:8px; padding:6px 10px; cursor:pointer; font-size:13px; font-weight:700; border:1px solid; transition:opacity 0.2s; }
-  .act-btn:active { opacity:0.7; }
-  .btn-ep { background:#FF6B3522; color:var(--orange); border-color:#FF6B3544; }
-  .btn-done { background:#2ECC7122; color:var(--green); border-color:#2ECC7144; }
-  .btn-edit { background:transparent; color:#666; border-color:#2e2e42; }
-  .btn-del { background:transparent; color:#e74c3c88; border-color:#e74c3c33; }
+  /* Seasons list */
+  .seasons-list { display:flex; flex-direction:column; gap:6px; }
+  .season-row { display:flex; align-items:center; gap:8px; background:#0d0d14; border-radius:8px; padding:8px 10px; }
+  .season-name { font-size:13px; font-weight:600; flex:1; }
+  .season-ep { font-size:12px; color:var(--muted); }
+  .season-status { font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; }
+
+  /* Films */
+  .films-list { display:flex; flex-direction:column; gap:6px; }
+  .film-row { display:flex; align-items:center; gap:10px; background:#0d0d14; border-radius:8px; padding:8px 10px; }
+  .film-check { width:18px; height:18px; accent-color:var(--green); cursor:pointer; flex-shrink:0; }
+  .film-name { font-size:13px; flex:1; }
+  .film-name.seen { color:var(--muted); text-decoration:line-through; }
+
+  /* Notes */
+  .notes-box { background:#0d0d14; border-radius:8px; padding:10px 12px; font-size:13px; color:#aaa; line-height:1.5; white-space:pre-wrap; min-height:40px; }
+  .notes-box.empty { color:#444; font-style:italic; }
 
   .confetti-emoji { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:36px; pointer-events:none; animation:confetti 2s forwards; z-index:10; }
-
-  .empty { text-align:center; color:#444; padding:50px 0; font-size:15px; }
+  .empty-state { text-align:center; color:#444; padding:50px 0; font-size:15px; }
 
   /* Modal */
-  .overlay { position:fixed; inset:0; background:#000b; display:flex; align-items:center; justify-content:center; z-index:100; padding:16px; }
-  .modal { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:24px; width:100%; max-width:440px; animation:fadeIn 0.25s ease; max-height:90vh; overflow-y:auto; }
+  .overlay { position:fixed; inset:0; background:#000b; display:flex; align-items:flex-start; justify-content:center; z-index:100; padding:16px; overflow-y:auto; }
+  .modal { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:24px; width:100%; max-width:480px; animation:fadeIn 0.25s ease; margin:auto; }
   .modal h2 { font-size:17px; font-weight:800; margin-bottom:18px; }
   .form-group { margin-bottom:14px; }
   .form-label { font-size:12px; color:#888; display:block; margin-bottom:4px; }
@@ -90,8 +111,18 @@
   .btn-cancel { background:#1e1e2e; color:#aaa; border:1px solid var(--border); border-radius:8px; padding:9px 18px; cursor:pointer; font-weight:600; font-size:14px; }
   .btn-save { background:var(--orange); color:#fff; border:none; border-radius:8px; padding:9px 20px; cursor:pointer; font-weight:700; font-size:14px; }
 
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .btn-add-small { background:#FF6B3522; color:var(--orange); border:1px solid #FF6B3544; border-radius:6px; padding:4px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+  .dynamic-row { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+  .dynamic-row .form-input { margin-bottom:0; }
+  .btn-remove { background:transparent; border:none; color:#e74c3c88; font-size:16px; cursor:pointer; padding:0 4px; }
+
+  .form-stars { display:flex; gap:4px; }
+  .form-star { font-size:20px; color:#3a3a4a; cursor:pointer; }
+  .form-star.on { color:var(--orange); }
+
   .confirm-overlay { position:fixed; inset:0; background:#000a; display:flex; align-items:center; justify-content:center; z-index:110; padding:16px; }
-  .confirm-box { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px; text-align:center; max-width:300px; width:100%; animation:fadeIn 0.2s ease; }
+  .confirm-box { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px; text-align:center; max-width:300px; width:100%; }
   .confirm-box h3 { margin-bottom:8px; }
   .confirm-box p { color:var(--muted); font-size:13px; margin-bottom:20px; }
   .confirm-actions { display:flex; gap:10px; justify-content:center; }
@@ -103,7 +134,7 @@
 <div class="header">
   <div>
     <h1>🎌 Anime Tracker</h1>
-    <p id="subtitle">Chargement...</p>
+    <p id="subtitle">Ta liste personnelle</p>
   </div>
   <button class="btn-add" onclick="openAdd()">+ Ajouter</button>
 </div>
@@ -127,31 +158,19 @@
 <div class="cards" id="cards-container"></div>
 
 <!-- Add/Edit Modal -->
-<div class="overlay" id="form-modal" style="display:none">
-  <div class="modal">
+<div class="overlay" id="form-modal" style="display:none" onclick="overlayClick(event)">
+  <div class="modal" id="modal-box">
     <h2 id="modal-title">✨ Nouvel anime</h2>
+
     <div class="form-group">
       <label class="form-label">Titre *</label>
-      <input class="form-input" id="f-title" placeholder="Ex: Naruto Shippuden">
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Épisode actuel</label>
-        <input class="form-input" id="f-ep" type="number" min="0" value="1">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Total épisodes</label>
-        <input class="form-input" id="f-total" type="number" min="1" placeholder="Optionnel">
-      </div>
+      <input class="form-input" id="f-title" placeholder="Ex: Demon Slayer">
     </div>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Statut</label>
         <select class="form-input" id="f-status">
-          <option>À voir</option>
-          <option>En cours</option>
-          <option>En pause</option>
-          <option>Terminé</option>
+          <option>À voir</option><option>En cours</option><option>En pause</option><option>Terminé</option>
         </select>
       </div>
       <div class="form-group">
@@ -163,20 +182,43 @@
         </select>
       </div>
     </div>
+
+    <!-- Saisons -->
     <div class="form-group">
-      <label class="form-label">Note</label>
-      <div class="stars" id="form-stars">
-        <span class="star" onclick="setFormRating(1)">★</span>
-        <span class="star" onclick="setFormRating(2)">★</span>
-        <span class="star" onclick="setFormRating(3)">★</span>
-        <span class="star" onclick="setFormRating(4)">★</span>
-        <span class="star" onclick="setFormRating(5)">★</span>
+      <div class="section-header">
+        <label class="form-label" style="margin:0">Saisons</label>
+        <button class="btn-add-small" onclick="addSeasonRow()">+ Saison</button>
+      </div>
+      <div id="seasons-rows"></div>
+    </div>
+
+    <!-- Films -->
+    <div class="form-group">
+      <div class="section-header">
+        <label class="form-label" style="margin:0">Films</label>
+        <button class="btn-add-small" onclick="addFilmRow()">+ Film</button>
+      </div>
+      <div id="films-rows"></div>
+    </div>
+
+    <!-- Note -->
+    <div class="form-group">
+      <label class="form-label">Note ⭐</label>
+      <div class="form-stars" id="form-stars">
+        <span class="form-star" onclick="setFormRating(1)">★</span>
+        <span class="form-star" onclick="setFormRating(2)">★</span>
+        <span class="form-star" onclick="setFormRating(3)">★</span>
+        <span class="form-star" onclick="setFormRating(4)">★</span>
+        <span class="form-star" onclick="setFormRating(5)">★</span>
       </div>
     </div>
+
+    <!-- Notes libres -->
     <div class="form-group">
-      <label class="form-label">Notes personnelles</label>
-      <textarea class="form-input" id="f-notes" rows="2" placeholder="Impressions, rappels..." style="resize:vertical"></textarea>
+      <label class="form-label">Notes personnelles 📝</label>
+      <textarea class="form-input" id="f-notes" rows="3" placeholder="Tes impressions, anecdotes, rappels..."></textarea>
     </div>
+
     <div class="form-actions">
       <button class="btn-cancel" onclick="closeModal()">Annuler</button>
       <button class="btn-save" onclick="saveAnime()">Enregistrer</button>
@@ -198,194 +240,276 @@
 </div>
 
 <script>
-const STATUS_COLORS = {
-  "En cours": "#FF6B35",
-  "Terminé": "#2ECC71",
-  "En pause": "#F39C12",
-  "À voir": "#9B59B6"
-};
-
+const STATUS_COLORS = { "En cours":"#FF6B35","Terminé":"#2ECC71","En pause":"#F39C12","À voir":"#9B59B6" };
 let animes = [];
 let currentFilter = "Tous";
 let editId = null;
 let deleteId = null;
 let formRating = 0;
+let openCards = new Set();
 
 function load() {
   try {
-    const s = localStorage.getItem("anime-tracker-v2");
+    const s = localStorage.getItem("anime-tracker-v3");
     animes = s ? JSON.parse(s) : [
-      { id:1, title:"Demon Slayer", currentEp:26, totalEp:44, status:"En cours", genre:"Action", rating:5, notes:"Saison 2 incroyable !" },
-      { id:2, title:"My Hero Academia", currentEp:113, totalEp:138, status:"En pause", genre:"Shonen", rating:4, notes:"" },
-      { id:3, title:"Attack on Titan", currentEp:87, totalEp:87, status:"Terminé", genre:"Action", rating:5, notes:"Fin parfaite" }
+      { id:1, title:"Demon Slayer", status:"En cours", genre:"Action", rating:5,
+        seasons:[{name:"Saison 1", currentEp:26, totalEp:26, done:true},{name:"Saison 2", currentEp:11, totalEp:18, done:false}],
+        films:[{name:"Mugen Train", seen:true}],
+        notes:"Les animations sont incroyables !" },
+      { id:2, title:"Attack on Titan", status:"Terminé", genre:"Action", rating:5,
+        seasons:[{name:"Saison 1",currentEp:25,totalEp:25,done:true},{name:"Saison 2",currentEp:12,totalEp:12,done:true},{name:"Saison 3",currentEp:22,totalEp:22,done:true},{name:"Saison 4",currentEp:87,totalEp:87,done:true}],
+        films:[],
+        notes:"Fin absolument parfaite." }
     ];
   } catch { animes = []; }
 }
 
-function save() {
-  try { localStorage.setItem("anime-tracker-v2", JSON.stringify(animes)); } catch {}
-}
+function save() { try { localStorage.setItem("anime-tracker-v3", JSON.stringify(animes)); } catch {} }
 
 function setFilter(f) {
   currentFilter = f;
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-  const btn = document.getElementById("f-" + f);
+  const btn = document.getElementById("f-"+f);
   if (btn) btn.classList.add("active");
+  render();
+}
+
+function toggleCard(id) {
+  if (openCards.has(id)) openCards.delete(id);
+  else openCards.add(id);
   render();
 }
 
 function render() {
   const search = document.getElementById("search-input").value.toLowerCase();
-  const filtered = animes.filter(a => {
-    return a.title.toLowerCase().includes(search) &&
-      (currentFilter === "Tous" || a.status === currentFilter);
-  });
+  const filtered = animes.filter(a =>
+    a.title.toLowerCase().includes(search) &&
+    (currentFilter === "Tous" || a.status === currentFilter)
+  );
 
-  // Stats
   document.getElementById("st-total").textContent = animes.length;
   document.getElementById("st-watching").textContent = animes.filter(a=>a.status==="En cours").length;
   document.getElementById("st-completed").textContent = animes.filter(a=>a.status==="Terminé").length;
-  document.getElementById("st-eps").textContent = animes.reduce((s,a)=>s+(a.currentEp||0),0);
+  document.getElementById("st-eps").textContent = animes.reduce((s,a)=>s+(a.seasons||[]).reduce((x,ss)=>x+(ss.currentEp||0),0),0);
   document.getElementById("subtitle").textContent = `Ta liste · ${animes.length} séries`;
 
   const container = document.getElementById("cards-container");
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="empty">Aucun anime trouvé 🌙</div>';
-    return;
-  }
+  if (!filtered.length) { container.innerHTML='<div class="empty-state">Aucun anime trouvé 🌙</div>'; return; }
 
   container.innerHTML = filtered.map(a => {
-    const pct = a.totalEp ? Math.round((a.currentEp / a.totalEp)*100) : null;
     const color = STATUS_COLORS[a.status] || "#888";
-    const stars = [1,2,3,4,5].map(n => `<span class="star ${n<=(a.rating||0)?'on':''}">${'★'}</span>`).join('');
-    const progress = a.totalEp ? `
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${a.status==='Terminé'?'var(--green)':'var(--orange)'}"></div></div>
-    ` : '';
+    const stars = [1,2,3,4,5].map(n=>`<span class="star ${n<=(a.rating||0)?'on':''}"">★</span>`).join('');
+    const isOpen = openCards.has(a.id);
+
+    // Current season
+    const seasons = a.seasons || [];
+    const currentSeason = seasons.find(s => !s.done) || seasons[seasons.length-1];
+    const seasonLabel = currentSeason ? currentSeason.name : "";
+    const pct = currentSeason && currentSeason.totalEp ? Math.round((currentSeason.currentEp/currentSeason.totalEp)*100) : null;
+
+    // Seasons detail
+    const seasonsHtml = seasons.length ? `
+      <div class="detail-section">
+        <div class="detail-title">Saisons</div>
+        <div class="seasons-list">
+          ${seasons.map((ss,i) => {
+            const sp = ss.totalEp ? Math.round((ss.currentEp/ss.totalEp)*100) : null;
+            const sc = ss.done ? "var(--green)" : (ss.currentEp>0 ? "var(--orange)" : "#444");
+            const sl = ss.done ? "Terminée" : (ss.currentEp>0 ? `Ép. ${ss.currentEp}${ss.totalEp?'/'+ss.totalEp:''}` : "À voir");
+            return `<div class="season-row">
+              <span class="season-name">${escHtml(ss.name)}</span>
+              ${!ss.done && a.status!=='Terminé' ? `<button class="act-btn btn-ep" style="padding:4px 8px;font-size:12px" onclick="incSeasonEp(${a.id},${i})">+1</button>` : ''}
+              ${!ss.done && a.status!=='Terminé' ? `<button class="act-btn btn-done" style="padding:4px 8px;font-size:11px" onclick="doneSeasonEp(${a.id},${i})">✓</button>` : ''}
+              <span class="season-status" style="background:${sc}22;color:${sc}">${sl}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : '';
+
+    // Films detail
+    const films = a.films || [];
+    const filmsHtml = films.length ? `
+      <div class="detail-section">
+        <div class="detail-title">Films</div>
+        <div class="films-list">
+          ${films.map((f,i) => `
+            <div class="film-row">
+              <input type="checkbox" class="film-check" ${f.seen?'checked':''} onchange="toggleFilm(${a.id},${i},this.checked)">
+              <span class="film-name ${f.seen?'seen':''}">${escHtml(f.name)}</span>
+              <span style="font-size:11px;color:${f.seen?'var(--green)':'#444'}">${f.seen?'✓ Vu':'À voir'}</span>
+            </div>`).join('')}
+        </div>
+      </div>` : '';
+
+    // Notes
+    const notesHtml = `
+      <div class="detail-section">
+        <div class="detail-title">Notes 📝</div>
+        <div class="notes-box ${a.notes?'':'empty'}">${a.notes ? escHtml(a.notes) : 'Aucune note pour l\'instant.'}</div>
+      </div>`;
 
     return `
     <div class="card ${a.status==='Terminé'?'done':''}" id="card-${a.id}">
-      <div class="card-top">
+      <div class="card-header" onclick="toggleCard(${a.id})">
         <div class="card-left">
           <div class="card-title-row">
             <span class="card-title">${escHtml(a.title)}</span>
             <span class="badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${a.status}</span>
-            ${a.genre ? `<span class="tag">${a.genre}</span>` : ''}
+            ${a.genre?`<span class="tag">${a.genre}</span>`:''}
           </div>
-          <div class="stars">${stars}</div>
-          ${a.notes ? `<div class="notes-text">"${escHtml(a.notes)}"</div>` : ''}
-          <div class="progress-section">
-            <div class="ep-row">
-              <span class="ep-current">Ép. ${a.currentEp}</span>
-              ${a.totalEp ? `<span class="ep-total">/ ${a.totalEp}</span>` : ''}
-              ${pct !== null ? `<span class="ep-pct">${pct}%</span>` : ''}
-            </div>
-            ${progress}
-          </div>
+          <div class="stars-row">${stars}</div>
+          ${seasonLabel ? `<div class="season-pill">📺 ${escHtml(seasonLabel)}${pct!==null?' · '+pct+'%':''}</div>` : ''}
         </div>
-        <div class="card-actions">
-          ${a.status !== 'Terminé' ? `<button class="act-btn btn-ep" onclick="incEp(${a.id})">▶+1</button>` : ''}
-          ${a.status !== 'Terminé' ? `<button class="act-btn btn-done" onclick="markDone(${a.id})">✓ Fin</button>` : ''}
+        <div class="card-actions" onclick="event.stopPropagation()">
           <button class="act-btn btn-edit" onclick="openEdit(${a.id})">✏️</button>
           <button class="act-btn btn-del" onclick="askDelete(${a.id})">🗑</button>
+          <div class="chevron ${isOpen?'open':''}">▼</div>
         </div>
+      </div>
+      <div class="card-detail ${isOpen?'open':''}">
+        ${seasonsHtml}
+        ${filmsHtml}
+        ${notesHtml}
       </div>
     </div>`;
   }).join('');
 }
 
 function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function incEp(id) {
+function incSeasonEp(aid, si) {
   animes = animes.map(a => {
-    if (a.id !== id) return a;
-    const next = a.currentEp + 1;
-    const done = a.totalEp && next >= a.totalEp;
-    return { ...a, currentEp: done ? a.totalEp : next, status: done ? 'Terminé' : (a.status==='À voir'?'En cours':a.status) };
+    if (a.id !== aid) return a;
+    const seasons = [...(a.seasons||[])];
+    const s = {...seasons[si]};
+    s.currentEp = (s.currentEp||0)+1;
+    if (s.totalEp && s.currentEp >= s.totalEp) { s.currentEp = s.totalEp; s.done = true; }
+    seasons[si] = s;
+    const allDone = seasons.every(x=>x.done);
+    return {...a, seasons, status: allDone ? 'Terminé' : (a.status==='À voir'?'En cours':a.status)};
   });
   save(); render();
 }
 
-function markDone(id) {
-  animes = animes.map(a => a.id===id ? {...a, status:'Terminé', currentEp: a.totalEp||a.currentEp} : a);
-  save();
-  const card = document.getElementById("card-"+id);
-  if (card) {
-    card.classList.add("done");
-    const emoji = document.createElement("div");
-    emoji.className = "confetti-emoji";
-    emoji.textContent = "🎉";
-    card.appendChild(emoji);
-    setTimeout(()=>emoji.remove(), 2000);
-  }
-  render();
+function doneSeasonEp(aid, si) {
+  animes = animes.map(a => {
+    if (a.id !== aid) return a;
+    const seasons = [...(a.seasons||[])];
+    const s = {...seasons[si]};
+    s.done = true;
+    if (s.totalEp) s.currentEp = s.totalEp;
+    seasons[si] = s;
+    const allDone = seasons.every(x=>x.done);
+    return {...a, seasons, status: allDone ? 'Terminé' : a.status};
+  });
+  save(); render();
 }
 
+function toggleFilm(aid, fi, val) {
+  animes = animes.map(a => {
+    if (a.id !== aid) return a;
+    const films = [...(a.films||[])];
+    films[fi] = {...films[fi], seen: val};
+    return {...a, films};
+  });
+  save(); render();
+}
+
+// Form
+let formSeasons = [];
+let formFilms = [];
+
 function openAdd() {
-  editId = null;
-  formRating = 0;
+  editId = null; formRating = 0; formSeasons = []; formFilms = [];
   document.getElementById("modal-title").textContent = "✨ Nouvel anime";
   document.getElementById("f-title").value = "";
-  document.getElementById("f-ep").value = "1";
-  document.getElementById("f-total").value = "";
   document.getElementById("f-status").value = "À voir";
   document.getElementById("f-genre").value = "Action";
   document.getElementById("f-notes").value = "";
-  updateFormStars();
+  renderFormSeasons(); renderFormFilms(); updateFormStars();
   document.getElementById("form-modal").style.display = "flex";
 }
 
 function openEdit(id) {
   const a = animes.find(x=>x.id===id);
   if (!a) return;
-  editId = id;
-  formRating = a.rating || 0;
+  editId = id; formRating = a.rating||0;
+  formSeasons = (a.seasons||[]).map(s=>({...s}));
+  formFilms = (a.films||[]).map(f=>({...f}));
   document.getElementById("modal-title").textContent = "✏️ Modifier";
   document.getElementById("f-title").value = a.title;
-  document.getElementById("f-ep").value = a.currentEp;
-  document.getElementById("f-total").value = a.totalEp || "";
   document.getElementById("f-status").value = a.status;
-  document.getElementById("f-genre").value = a.genre || "Action";
-  document.getElementById("f-notes").value = a.notes || "";
-  updateFormStars();
+  document.getElementById("f-genre").value = a.genre||"Action";
+  document.getElementById("f-notes").value = a.notes||"";
+  renderFormSeasons(); renderFormFilms(); updateFormStars();
   document.getElementById("form-modal").style.display = "flex";
 }
 
 function closeModal() { document.getElementById("form-modal").style.display = "none"; }
+function overlayClick(e) { if (e.target.id==="form-modal") closeModal(); }
 
-function setFormRating(n) { formRating = n; updateFormStars(); }
+function addSeasonRow() {
+  formSeasons.push({name:"Saison "+(formSeasons.length+1), currentEp:0, totalEp:"", done:false});
+  renderFormSeasons();
+}
+function removeSeasonRow(i) { formSeasons.splice(i,1); renderFormSeasons(); }
+function renderFormSeasons() {
+  document.getElementById("seasons-rows").innerHTML = formSeasons.map((s,i)=>`
+    <div class="dynamic-row">
+      <input class="form-input" value="${escHtml(s.name)}" placeholder="Saison 1" oninput="formSeasons[${i}].name=this.value" style="flex:2">
+      <input class="form-input" type="number" min="0" value="${s.currentEp||0}" placeholder="Ép. actuel" oninput="formSeasons[${i}].currentEp=parseInt(this.value)||0" style="flex:1">
+      <input class="form-input" type="number" min="1" value="${s.totalEp||''}" placeholder="Total" oninput="formSeasons[${i}].totalEp=parseInt(this.value)||null" style="flex:1">
+      <button class="btn-remove" onclick="removeSeasonRow(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addFilmRow() { formFilms.push({name:"", seen:false}); renderFormFilms(); }
+function removeFilmRow(i) { formFilms.splice(i,1); renderFormFilms(); }
+function renderFormFilms() {
+  document.getElementById("films-rows").innerHTML = formFilms.map((f,i)=>`
+    <div class="dynamic-row">
+      <input class="form-input" value="${escHtml(f.name)}" placeholder="Titre du film" oninput="formFilms[${i}].name=this.value" style="flex:1">
+      <label style="font-size:12px;color:#888;display:flex;align-items:center;gap:4px;white-space:nowrap">
+        <input type="checkbox" ${f.seen?'checked':''} onchange="formFilms[${i}].seen=this.checked"> Vu
+      </label>
+      <button class="btn-remove" onclick="removeFilmRow(${i})">✕</button>
+    </div>`).join('');
+}
+
+function setFormRating(n) { formRating=n; updateFormStars(); }
 function updateFormStars() {
-  document.querySelectorAll("#form-stars .star").forEach((s,i) => {
-    s.classList.toggle("on", i < formRating);
-  });
+  document.querySelectorAll("#form-stars .form-star").forEach((s,i)=>s.classList.toggle("on",i<formRating));
 }
 
 function saveAnime() {
   const title = document.getElementById("f-title").value.trim();
   if (!title) return;
-  const ep = parseInt(document.getElementById("f-ep").value) || 1;
-  const totalRaw = document.getElementById("f-total").value;
-  const total = totalRaw ? parseInt(totalRaw) : null;
-  let status = document.getElementById("f-status").value;
-  if (total && ep >= total) status = "Terminé";
+  const status = document.getElementById("f-status").value;
   const genre = document.getElementById("f-genre").value;
   const notes = document.getElementById("f-notes").value.trim();
+  const seasons = formSeasons.filter(s=>s.name.trim()).map(s=>{
+    const ep = s.currentEp||0;
+    const tot = s.totalEp||null;
+    const done = tot ? ep>=tot : s.done;
+    return {...s, currentEp:ep, totalEp:tot, done};
+  });
+  const films = formFilms.filter(f=>f.name.trim());
+  const allSeasonsDone = seasons.length && seasons.every(s=>s.done);
+  const finalStatus = allSeasonsDone ? 'Terminé' : status;
 
   if (editId) {
-    animes = animes.map(a => a.id===editId ? {...a, title, currentEp:ep, totalEp:total, status, genre, rating:formRating, notes} : a);
+    animes = animes.map(a=>a.id===editId ? {...a,title,status:finalStatus,genre,rating:formRating,notes,seasons,films} : a);
   } else {
-    animes.push({ id: Date.now(), title, currentEp:ep, totalEp:total, status, genre, rating:formRating, notes });
+    animes.push({id:Date.now(),title,status:finalStatus,genre,rating:formRating,notes,seasons,films});
   }
   save(); closeModal(); render();
 }
 
-function askDelete(id) { deleteId = id; document.getElementById("confirm-modal").style.display = "flex"; }
-function closeConfirm() { document.getElementById("confirm-modal").style.display = "none"; deleteId = null; }
-function confirmDelete() {
-  animes = animes.filter(a=>a.id!==deleteId);
-  save(); closeConfirm(); render();
-}
+function askDelete(id) { deleteId=id; document.getElementById("confirm-modal").style.display="flex"; }
+function closeConfirm() { document.getElementById("confirm-modal").style.display="none"; deleteId=null; }
+function confirmDelete() { animes=animes.filter(a=>a.id!==deleteId); save(); closeConfirm(); render(); }
 
 load(); render();
 </script>
