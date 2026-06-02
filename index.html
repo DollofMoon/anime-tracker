@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Anime Tracker">
+<title>🎌 Anime Tracker</title>
+<style>
+  :root {
+    --orange: #FF6B35;
+    --green: #2ECC71;
+    --yellow: #F39C12;
+    --purple: #9B59B6;
+    --bg: #0d0d14;
+    --card: #13131f;
+    --border: #1e1e2e;
+    --input-bg: #1a1a2e;
+    --text: #e0e0f0;
+    --muted: #666;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Helvetica Neue', sans-serif; min-height: 100vh; padding: 20px 16px 40px; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-8px);} to { opacity:1; transform:translateY(0);} }
+  @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.05)} 100%{transform:scale(1)} }
+  @keyframes confetti { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-50px) scale(0.3)} }
+
+  .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+  .header h1 { font-size:24px; font-weight:800; letter-spacing:-0.5px; }
+  .header p { font-size:12px; color:var(--muted); margin-top:3px; }
+  .btn-add { background:var(--orange); color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:700; font-size:14px; cursor:pointer; }
+
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:20px; }
+  .stat { background:var(--card); border-radius:10px; padding:12px 8px; border:1px solid var(--border); text-align:center; }
+  .stat-val { font-size:20px; font-weight:800; }
+  .stat-lbl { font-size:11px; color:var(--muted); margin-top:2px; }
+
+  .filters { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .search { flex:1; min-width:140px; background:var(--input-bg); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 12px; font-size:14px; outline:none; }
+  .search:focus { border-color:var(--orange); }
+  .filter-btn { background:var(--card); color:#888; border:1px solid var(--border); border-radius:20px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .filter-btn.active { background:var(--orange); color:#fff; border-color:var(--orange); }
+
+  .cards { display:flex; flex-direction:column; gap:10px; }
+  .card { background:var(--card); border-radius:14px; padding:14px 16px; border:1px solid var(--border); animation:fadeIn 0.3s ease; transition:border-color 0.3s; position:relative; overflow:hidden; }
+  .card.done { border-color:var(--green); }
+  .card.popping { animation:pop 0.4s ease; }
+  .card-top { display:flex; gap:12px; align-items:flex-start; }
+  .card-left { flex:1; min-width:0; }
+  .card-title-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+  .card-title { font-weight:800; font-size:15px; color:#f0f0ff; }
+  .badge { border-radius:20px; padding:2px 9px; font-size:11px; font-weight:700; }
+  .tag { background:#1e1e2e; border-radius:20px; padding:2px 9px; font-size:11px; color:#888; }
+  .stars { display:flex; gap:2px; margin-bottom:6px; }
+  .star { font-size:15px; color:#3a3a4a; cursor:pointer; }
+  .star.on { color:var(--orange); }
+  .notes-text { font-size:12px; color:var(--muted); font-style:italic; margin-top:4px; }
+
+  .progress-section { margin-top:10px; }
+  .ep-row { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
+  .ep-current { font-size:13px; color:var(--orange); font-weight:700; }
+  .ep-total { font-size:13px; color:var(--muted); }
+  .ep-pct { font-size:12px; color:var(--muted); margin-left:auto; }
+  .progress-bar { background:#1e1e2e; border-radius:99px; height:5px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:99px; transition:width 0.4s ease; }
+
+  .card-actions { display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
+  .act-btn { border-radius:8px; padding:6px 10px; cursor:pointer; font-size:13px; font-weight:700; border:1px solid; transition:opacity 0.2s; }
+  .act-btn:active { opacity:0.7; }
+  .btn-ep { background:#FF6B3522; color:var(--orange); border-color:#FF6B3544; }
+  .btn-done { background:#2ECC7122; color:var(--green); border-color:#2ECC7144; }
+  .btn-edit { background:transparent; color:#666; border-color:#2e2e42; }
+  .btn-del { background:transparent; color:#e74c3c88; border-color:#e74c3c33; }
+
+  .confetti-emoji { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:36px; pointer-events:none; animation:confetti 2s forwards; z-index:10; }
+
+  .empty { text-align:center; color:#444; padding:50px 0; font-size:15px; }
+
+  /* Modal */
+  .overlay { position:fixed; inset:0; background:#000b; display:flex; align-items:center; justify-content:center; z-index:100; padding:16px; }
+  .modal { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:24px; width:100%; max-width:440px; animation:fadeIn 0.25s ease; max-height:90vh; overflow-y:auto; }
+  .modal h2 { font-size:17px; font-weight:800; margin-bottom:18px; }
+  .form-group { margin-bottom:14px; }
+  .form-label { font-size:12px; color:#888; display:block; margin-bottom:4px; }
+  .form-input { width:100%; background:var(--input-bg); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:9px 12px; font-size:14px; outline:none; }
+  .form-input:focus { border-color:var(--orange); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+  .btn-cancel { background:#1e1e2e; color:#aaa; border:1px solid var(--border); border-radius:8px; padding:9px 18px; cursor:pointer; font-weight:600; font-size:14px; }
+  .btn-save { background:var(--orange); color:#fff; border:none; border-radius:8px; padding:9px 20px; cursor:pointer; font-weight:700; font-size:14px; }
+
+  .confirm-overlay { position:fixed; inset:0; background:#000a; display:flex; align-items:center; justify-content:center; z-index:110; padding:16px; }
+  .confirm-box { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px; text-align:center; max-width:300px; width:100%; animation:fadeIn 0.2s ease; }
+  .confirm-box h3 { margin-bottom:8px; }
+  .confirm-box p { color:var(--muted); font-size:13px; margin-bottom:20px; }
+  .confirm-actions { display:flex; gap:10px; justify-content:center; }
+  .btn-confirm-del { background:#e74c3c; color:#fff; border:none; border-radius:8px; padding:9px 20px; cursor:pointer; font-weight:700; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🎌 Anime Tracker</h1>
+    <p id="subtitle">Chargement...</p>
+  </div>
+  <button class="btn-add" onclick="openAdd()">+ Ajouter</button>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-val" id="st-total">0</div><div class="stat-lbl">Total</div></div>
+  <div class="stat"><div class="stat-val" style="color:var(--orange)" id="st-watching">0</div><div class="stat-lbl">En cours</div></div>
+  <div class="stat"><div class="stat-val" style="color:var(--green)" id="st-completed">0</div><div class="stat-lbl">Terminés</div></div>
+  <div class="stat"><div class="stat-val" style="color:var(--purple)" id="st-eps">0</div><div class="stat-lbl">Épisodes</div></div>
+</div>
+
+<div class="filters">
+  <input class="search" type="text" placeholder="🔍 Rechercher..." id="search-input" oninput="render()">
+  <button class="filter-btn active" onclick="setFilter('Tous')" id="f-Tous">Tous</button>
+  <button class="filter-btn" onclick="setFilter('En cours')" id="f-En cours">En cours</button>
+  <button class="filter-btn" onclick="setFilter('Terminé')" id="f-Terminé">Terminé</button>
+  <button class="filter-btn" onclick="setFilter('En pause')" id="f-En pause">En pause</button>
+  <button class="filter-btn" onclick="setFilter('À voir')" id="f-À voir">À voir</button>
+</div>
+
+<div class="cards" id="cards-container"></div>
+
+<!-- Add/Edit Modal -->
+<div class="overlay" id="form-modal" style="display:none">
+  <div class="modal">
+    <h2 id="modal-title">✨ Nouvel anime</h2>
+    <div class="form-group">
+      <label class="form-label">Titre *</label>
+      <input class="form-input" id="f-title" placeholder="Ex: Naruto Shippuden">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Épisode actuel</label>
+        <input class="form-input" id="f-ep" type="number" min="0" value="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total épisodes</label>
+        <input class="form-input" id="f-total" type="number" min="1" placeholder="Optionnel">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Statut</label>
+        <select class="form-input" id="f-status">
+          <option>À voir</option>
+          <option>En cours</option>
+          <option>En pause</option>
+          <option>Terminé</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Genre</label>
+        <select class="form-input" id="f-genre">
+          <option>Action</option><option>Romance</option><option>Shonen</option><option>Shojo</option>
+          <option>Isekai</option><option>Seinen</option><option>Fantasy</option><option>Horreur</option>
+          <option>Comédie</option><option>Sport</option><option>Mystère</option><option>Tranche de vie</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note</label>
+      <div class="stars" id="form-stars">
+        <span class="star" onclick="setFormRating(1)">★</span>
+        <span class="star" onclick="setFormRating(2)">★</span>
+        <span class="star" onclick="setFormRating(3)">★</span>
+        <span class="star" onclick="setFormRating(4)">★</span>
+        <span class="star" onclick="setFormRating(5)">★</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes personnelles</label>
+      <textarea class="form-input" id="f-notes" rows="2" placeholder="Impressions, rappels..." style="resize:vertical"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-save" onclick="saveAnime()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm -->
+<div class="confirm-overlay" id="confirm-modal" style="display:none">
+  <div class="confirm-box">
+    <div style="font-size:28px;margin-bottom:10px">🗑️</div>
+    <h3>Supprimer cet anime ?</h3>
+    <p>Cette action est irréversible.</p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" onclick="closeConfirm()">Annuler</button>
+      <button class="btn-confirm-del" onclick="confirmDelete()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATUS_COLORS = {
+  "En cours": "#FF6B35",
+  "Terminé": "#2ECC71",
+  "En pause": "#F39C12",
+  "À voir": "#9B59B6"
+};
+
+let animes = [];
+let currentFilter = "Tous";
+let editId = null;
+let deleteId = null;
+let formRating = 0;
+
+function load() {
+  try {
+    const s = localStorage.getItem("anime-tracker-v2");
+    animes = s ? JSON.parse(s) : [
+      { id:1, title:"Demon Slayer", currentEp:26, totalEp:44, status:"En cours", genre:"Action", rating:5, notes:"Saison 2 incroyable !" },
+      { id:2, title:"My Hero Academia", currentEp:113, totalEp:138, status:"En pause", genre:"Shonen", rating:4, notes:"" },
+      { id:3, title:"Attack on Titan", currentEp:87, totalEp:87, status:"Terminé", genre:"Action", rating:5, notes:"Fin parfaite" }
+    ];
+  } catch { animes = []; }
+}
+
+function save() {
+  try { localStorage.setItem("anime-tracker-v2", JSON.stringify(animes)); } catch {}
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  const btn = document.getElementById("f-" + f);
+  if (btn) btn.classList.add("active");
+  render();
+}
+
+function render() {
+  const search = document.getElementById("search-input").value.toLowerCase();
+  const filtered = animes.filter(a => {
+    return a.title.toLowerCase().includes(search) &&
+      (currentFilter === "Tous" || a.status === currentFilter);
+  });
+
+  // Stats
+  document.getElementById("st-total").textContent = animes.length;
+  document.getElementById("st-watching").textContent = animes.filter(a=>a.status==="En cours").length;
+  document.getElementById("st-completed").textContent = animes.filter(a=>a.status==="Terminé").length;
+  document.getElementById("st-eps").textContent = animes.reduce((s,a)=>s+(a.currentEp||0),0);
+  document.getElementById("subtitle").textContent = `Ta liste · ${animes.length} séries`;
+
+  const container = document.getElementById("cards-container");
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty">Aucun anime trouvé 🌙</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(a => {
+    const pct = a.totalEp ? Math.round((a.currentEp / a.totalEp)*100) : null;
+    const color = STATUS_COLORS[a.status] || "#888";
+    const stars = [1,2,3,4,5].map(n => `<span class="star ${n<=(a.rating||0)?'on':''}">${'★'}</span>`).join('');
+    const progress = a.totalEp ? `
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${a.status==='Terminé'?'var(--green)':'var(--orange)'}"></div></div>
+    ` : '';
+
+    return `
+    <div class="card ${a.status==='Terminé'?'done':''}" id="card-${a.id}">
+      <div class="card-top">
+        <div class="card-left">
+          <div class="card-title-row">
+            <span class="card-title">${escHtml(a.title)}</span>
+            <span class="badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${a.status}</span>
+            ${a.genre ? `<span class="tag">${a.genre}</span>` : ''}
+          </div>
+          <div class="stars">${stars}</div>
+          ${a.notes ? `<div class="notes-text">"${escHtml(a.notes)}"</div>` : ''}
+          <div class="progress-section">
+            <div class="ep-row">
+              <span class="ep-current">Ép. ${a.currentEp}</span>
+              ${a.totalEp ? `<span class="ep-total">/ ${a.totalEp}</span>` : ''}
+              ${pct !== null ? `<span class="ep-pct">${pct}%</span>` : ''}
+            </div>
+            ${progress}
+          </div>
+        </div>
+        <div class="card-actions">
+          ${a.status !== 'Terminé' ? `<button class="act-btn btn-ep" onclick="incEp(${a.id})">▶+1</button>` : ''}
+          ${a.status !== 'Terminé' ? `<button class="act-btn btn-done" onclick="markDone(${a.id})">✓ Fin</button>` : ''}
+          <button class="act-btn btn-edit" onclick="openEdit(${a.id})">✏️</button>
+          <button class="act-btn btn-del" onclick="askDelete(${a.id})">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function incEp(id) {
+  animes = animes.map(a => {
+    if (a.id !== id) return a;
+    const next = a.currentEp + 1;
+    const done = a.totalEp && next >= a.totalEp;
+    return { ...a, currentEp: done ? a.totalEp : next, status: done ? 'Terminé' : (a.status==='À voir'?'En cours':a.status) };
+  });
+  save(); render();
+}
+
+function markDone(id) {
+  animes = animes.map(a => a.id===id ? {...a, status:'Terminé', currentEp: a.totalEp||a.currentEp} : a);
+  save();
+  const card = document.getElementById("card-"+id);
+  if (card) {
+    card.classList.add("done");
+    const emoji = document.createElement("div");
+    emoji.className = "confetti-emoji";
+    emoji.textContent = "🎉";
+    card.appendChild(emoji);
+    setTimeout(()=>emoji.remove(), 2000);
+  }
+  render();
+}
+
+function openAdd() {
+  editId = null;
+  formRating = 0;
+  document.getElementById("modal-title").textContent = "✨ Nouvel anime";
+  document.getElementById("f-title").value = "";
+  document.getElementById("f-ep").value = "1";
+  document.getElementById("f-total").value = "";
+  document.getElementById("f-status").value = "À voir";
+  document.getElementById("f-genre").value = "Action";
+  document.getElementById("f-notes").value = "";
+  updateFormStars();
+  document.getElementById("form-modal").style.display = "flex";
+}
+
+function openEdit(id) {
+  const a = animes.find(x=>x.id===id);
+  if (!a) return;
+  editId = id;
+  formRating = a.rating || 0;
+  document.getElementById("modal-title").textContent = "✏️ Modifier";
+  document.getElementById("f-title").value = a.title;
+  document.getElementById("f-ep").value = a.currentEp;
+  document.getElementById("f-total").value = a.totalEp || "";
+  document.getElementById("f-status").value = a.status;
+  document.getElementById("f-genre").value = a.genre || "Action";
+  document.getElementById("f-notes").value = a.notes || "";
+  updateFormStars();
+  document.getElementById("form-modal").style.display = "flex";
+}
+
+function closeModal() { document.getElementById("form-modal").style.display = "none"; }
+
+function setFormRating(n) { formRating = n; updateFormStars(); }
+function updateFormStars() {
+  document.querySelectorAll("#form-stars .star").forEach((s,i) => {
+    s.classList.toggle("on", i < formRating);
+  });
+}
+
+function saveAnime() {
+  const title = document.getElementById("f-title").value.trim();
+  if (!title) return;
+  const ep = parseInt(document.getElementById("f-ep").value) || 1;
+  const totalRaw = document.getElementById("f-total").value;
+  const total = totalRaw ? parseInt(totalRaw) : null;
+  let status = document.getElementById("f-status").value;
+  if (total && ep >= total) status = "Terminé";
+  const genre = document.getElementById("f-genre").value;
+  const notes = document.getElementById("f-notes").value.trim();
+
+  if (editId) {
+    animes = animes.map(a => a.id===editId ? {...a, title, currentEp:ep, totalEp:total, status, genre, rating:formRating, notes} : a);
+  } else {
+    animes.push({ id: Date.now(), title, currentEp:ep, totalEp:total, status, genre, rating:formRating, notes });
+  }
+  save(); closeModal(); render();
+}
+
+function askDelete(id) { deleteId = id; document.getElementById("confirm-modal").style.display = "flex"; }
+function closeConfirm() { document.getElementById("confirm-modal").style.display = "none"; deleteId = null; }
+function confirmDelete() {
+  animes = animes.filter(a=>a.id!==deleteId);
+  save(); closeConfirm(); render();
+}
+
+load(); render();
+</script>
+</body>
+</html>
